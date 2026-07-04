@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Notes Hub & Tweet Composer</title>
+    <meta name="description" content="Browse, search, and filter the latest Google Cloud BigQuery release notes and instantly draft and share updates to Twitter/X.">
+    <!-- Google Fonts: Outfit and Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Custom stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" type="image/png" href="https://img.icons8.com/color/48/000000/google-cloud-platform.png">
+</head>
+<body>
+    <!-- Background glows for premium look -->
+    <div class="glow-bg glow-1"></div>
+    <div class="glow-bg glow-2"></div>
+
+    <div class="app-container">
+        <!-- Main Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <svg class="gcp-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z" fill="url(#cloudGrad)"/>
+                    <defs>
+                        <linearGradient id="cloudGrad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#4285F4"/>
+                            <stop offset="50%" stop-color="#34A853"/>
+                            <stop offset="75%" stop-color="#FBBC05"/>
+                            <stop offset="100%" stop-color="#EA4335"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div class="title-meta">
+                    <h1>BigQuery <span class="gradient-text">Release Notes</span></h1>
+                    <p class="subtitle">Stay updated with Google Cloud BigQuery developments</p>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <div id="cache-indicator" class="cache-status hidden">
+                    <span class="pulse-dot"></span>
+                    <span id="cache-time-text">Cached at 12:00</span>
+                </div>
+                <button id="btn-refresh" class="btn btn-primary" title="Refresh Release Notes">
+                    <svg class="icon btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                    </svg>
+                    <span id="btn-refresh-text">Refresh</span>
+                    <div id="refresh-spinner" class="spinner hidden"></div>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Layout Split -->
+        <main class="app-layout">
+            <!-- Left Panel: Feed list & Filters -->
+            <section class="feed-section">
+                <!-- Search & Filters Bar -->
+                <div class="control-bar card">
+                    <div class="search-box">
+                        <svg class="icon search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="search-input" placeholder="Search updates by keyword, feature, function..." aria-label="Search release notes">
+                        <button id="btn-clear-search" class="clear-search-btn hidden" title="Clear search">&times;</button>
+                    </div>
+                    
+                    <div class="filters-row">
+                        <div class="filter-group">
+                            <label for="filter-type">Type</label>
+                            <select id="filter-type" class="filter-select">
+                                <option value="all">All Types</option>
+                                <option value="Feature">Features</option>
+                                <option value="Change">Changes</option>
+                                <option value="Deprecated">Deprecated</option>
+                                <option value="General">General / Other</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="sort-order">Sort</label>
+                            <select id="sort-order" class="filter-select">
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feed Stats & Multi-select Header -->
+                <div class="feed-header-info">
+                    <span id="stats-count" class="stats-text">Showing 0 updates</span>
+                    <span id="filter-active-tag" class="filter-badge hidden">Filtered</span>
+                </div>
+
+                <!-- Release Notes Container -->
+                <div id="notes-container" class="notes-list">
+                    <!-- Loading Skeleton -->
+                    <div class="skeleton-card card">
+                        <div class="skeleton-header">
+                            <div class="skeleton-badge"></div>
+                            <div class="skeleton-badge"></div>
+                        </div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line short"></div>
+                    </div>
+                    <div class="skeleton-card card">
+                        <div class="skeleton-header">
+                            <div class="skeleton-badge"></div>
+                            <div class="skeleton-badge"></div>
+                        </div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line short"></div>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="empty-state card hidden">
+                    <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                    <h3>No Release Notes Found</h3>
+                    <p>Try resetting your search query or filters to find updates.</p>
+                    <button id="btn-reset-filters" class="btn btn-secondary">Reset Filters</button>
+                </div>
+
+                <!-- Error State -->
+                <div id="error-state" class="error-state card hidden">
+                    <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <h3>Failed to Retrieve Feed</h3>
+                    <p id="error-message">An unexpected error occurred while loading the release notes.</p>
+                    <button id="btn-retry" class="btn btn-secondary">Retry Fetching</button>
+                </div>
+            </section>
+
+            <!-- Right Panel: Dynamic Tweet Composer -->
+            <aside class="composer-section">
+                <div class="composer-sticky-wrapper">
+                    <div id="tweet-composer" class="composer-card card">
+                        <div class="composer-header">
+                            <svg class="x-logo" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                            </svg>
+                            <h2>X/Twitter Composer</h2>
+                        </div>
+                        
+                        <!-- Composer State: Empty -->
+                        <div id="composer-empty-state" class="composer-empty">
+                            <div class="composer-empty-graphic">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                                </svg>
+                            </div>
+                            <h3>Select an Update</h3>
+                            <p>Click on any release note to load its content here and compose a post for X/Twitter.</p>
+                        </div>
+
+                        <!-- Composer State: Active -->
+                        <div id="composer-active-state" class="composer-form hidden">
+                            <!-- Selected Item Summary -->
+                            <div class="selected-meta-pill">
+                                <span id="composer-selected-type" class="badge">Feature</span>
+                                <span id="composer-selected-date" class="selected-date">July 01, 2026</span>
+                                <button id="btn-deselect" class="btn-deselect-note" title="Deselect update">&times;</button>
+                            </div>
+
+                            <!-- Template Selector -->
+                            <div class="composer-field">
+                                <label class="field-label">Post Style Template</label>
+                                <div class="template-selector-grid">
+                                    <button class="template-btn active" data-style="standard" title="Direct and informative">🚀 Standard</button>
+                                    <button class="template-btn" data-style="hype" title="Excited and engaging">🔥 Hype</button>
+                                    <button class="template-btn" data-style="professional" title="Detailed and formal">💼 Corporate</button>
+                                    <button class="template-btn" data-style="minimal" title="Short and concise">⚡ Minimal</button>
+                                </div>
+                            </div>
+
+                            <!-- Text Editor -->
+                            <div class="composer-field">
+                                <div class="editor-header">
+                                    <label for="tweet-textarea" class="field-label">Draft</label>
+                                    <button id="btn-auto-shorten" class="btn-text-action" title="Shorten description to fit 280 characters">
+                                        <svg class="small-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/>
+                                        </svg>
+                                        Auto-Shorten
+                                    </button>
+                                </div>
+                                <div class="textarea-wrapper">
+                                    <textarea id="tweet-textarea" rows="8" placeholder="What's happening in BigQuery?"></textarea>
+                                </div>
+                                <div class="editor-footer">
+                                    <div class="hashtag-helpers">
+                                        <button class="hashtag-chip" data-tag="#BigQuery">#BigQuery</button>
+                                        <button class="hashtag-chip" data-tag="#GoogleCloud">#GoogleCloud</button>
+                                        <button class="hashtag-chip" data-tag="#DataEngineering">#DataEng</button>
+                                    </div>
+                                    <div id="char-counter" class="char-counter">0 / 280</div>
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="composer-actions">
+                                <button id="btn-copy-tweet" class="btn btn-secondary">
+                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                    <span id="btn-copy-text">Copy Text</span>
+                                </button>
+                                <button id="btn-send-tweet" class="btn btn-x-brand">
+                                    <svg viewBox="0 0 24 24" class="icon" fill="currentColor">
+                                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                    </svg>
+                                    Post on X
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Notification Toast for Copied Feed Links / Success states -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
