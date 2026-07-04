@@ -88,14 +88,43 @@ function generateTweetDraft(update, style = 'standard', maxSummaryLen = null) {
 
 // --- INITIALIZE & ATTACH EVENTS ---
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     fetchReleaseNotes();
     setupEventHandlers();
 });
+
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    const checkboxTheme = document.getElementById('checkbox-theme');
+    if (savedTheme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        if (checkboxTheme) checkboxTheme.checked = true;
+    } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        if (checkboxTheme) checkboxTheme.checked = false;
+    }
+}
 
 function setupEventHandlers() {
     // Refresh button
     elements.btnRefresh.addEventListener('click', () => fetchReleaseNotes(true));
     elements.btnRetry.addEventListener('click', () => fetchReleaseNotes(true));
+
+    // Theme toggle switch
+    const checkboxTheme = document.getElementById('checkbox-theme');
+    if (checkboxTheme) {
+        checkboxTheme.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+                showToast('Light mode enabled');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                showToast('Dark mode enabled');
+            }
+        });
+    }
 
     // Filters & Search
     elements.searchInput.addEventListener('input', (e) => {
