@@ -25,6 +25,7 @@ const elements = {
     sortOrder: document.getElementById('sort-order'),
     statsCount: document.getElementById('stats-count'),
     filterActiveTag: document.getElementById('filter-active-tag'),
+    btnExportCSV: document.getElementById('btn-export-csv'),
     
     emptyState: document.getElementById('empty-state'),
     btnResetFilters: document.getElementById('btn-reset-filters'),
@@ -121,6 +122,7 @@ function setupEventHandlers() {
     });
 
     elements.btnResetFilters.addEventListener('click', resetFilters);
+    elements.btnExportCSV.addEventListener('click', exportToCSV);
 
     // Composer interactions
     elements.btnDeselect.addEventListener('click', deselectUpdate);
@@ -306,8 +308,14 @@ function renderNotes() {
                     <time class="note-date" datetime="${update.sort_date}">${update.date}</time>
                 </div>
                 <div class="quick-actions">
-                    <button class="btn-quick-share" title="Deselect/Select update for Tweet" aria-label="Select update">
-                        <svg class="quick-share-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <button class="btn-card-copy" title="Copy card text to clipboard" aria-label="Copy card text">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    </button>
+                    <button class="btn-quick-share" title="Select update for Tweet" aria-label="Select update">
+                        <svg class="quick-share-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/>
                         </svg>
                     </button>
@@ -317,6 +325,20 @@ function renderNotes() {
                 ${update.content}
             </div>
         `;
+
+        // Copy card click listener
+        const copyCardBtn = card.querySelector('.btn-card-copy');
+        copyCardBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            copyCardToClipboard(update);
+        });
+
+        // Quick share click listener
+        const shareCardBtn = card.querySelector('.btn-quick-share');
+        shareCardBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectUpdate(update);
+        });
 
         // Card select click listener
         card.addEventListener('click', (e) => {
@@ -517,4 +539,54 @@ function showToast(message, type = 'info') {
     setTimeout(() => {
         elements.toast.classList.remove('show');
     }, 3000);
+}
+
+async function copyCardToClipboard(update) {
+    if (!update) return;
+    const text = `BigQuery Release Note (${update.date}) - [${update.type}]\n\n${update.text}\n\nRead more: ${update.link}`;
+    try {
+        await navigator.clipboard.writeText(text);
+        showToast('Card content copied to clipboard!');
+    } catch (err) {
+        console.error('Failed to copy card:', err);
+        showToast('Failed to copy. Please manually copy the text.', 'warning');
+    }
+}
+
+function exportToCSV() {
+    if (state.filteredUpdates.length === 0) {
+        showToast('No updates to export', 'warning');
+        return;
+    }
+    
+    const headers = ['Date', 'Type', 'Description', 'Link'];
+    const csvRows = [headers.map(h => `"${h}"`).join(',')];
+    
+    state.filteredUpdates.forEach(item => {
+        const cleanText = item.text.replace(/"/g, '""').replace(/\r?\n|\r/g, ' ');
+        const row = [
+            item.date,
+            item.type,
+            cleanText,
+            item.link
+        ];
+        csvRows.push(row.map(val => `"${val}"`).join(','));
+    });
+    
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    
+    const filterTag = state.filterType !== 'all' ? `_${state.filterType.toLowerCase()}` : '';
+    const dateStr = new Date().toISOString().split('T')[0];
+    link.setAttribute("download", `bigquery_release_notes_${dateStr}${filterTag}.csv`);
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast('CSV export completed!');
 }

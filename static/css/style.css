@@ -327,6 +327,12 @@ body {
     padding: 0 0.5rem;
 }
 
+.stats-left {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
 .stats-text {
     font-size: 0.85rem;
     color: var(--text-secondary);
@@ -339,6 +345,12 @@ body {
     padding: 0.2rem 0.6rem;
     border-radius: 4px;
     border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.btn-small {
+    padding: 0.4rem 0.8rem !important;
+    font-size: 0.8rem !important;
+    border-radius: 6px !important;
 }
 
 /* --- RELEASE NOTES LIST --- */
@@ -451,8 +463,8 @@ body {
     gap: 0.5rem;
 }
 
-/* Quick Share Tweet button inside card */
-.btn-quick-share {
+/* Quick actions buttons inside card */
+.btn-quick-share, .btn-card-copy {
     background: transparent;
     border: none;
     color: var(--text-muted);
@@ -465,12 +477,12 @@ body {
     transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
-.btn-quick-share:hover {
+.btn-quick-share:hover, .btn-card-copy:hover {
     background: rgba(255, 255, 255, 0.05);
     color: var(--text-primary);
 }
 
-.btn-quick-share svg {
+.btn-quick-share svg, .btn-card-copy svg {
     width: 16px;
     height: 16px;
 }

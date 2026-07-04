@@ -93,8 +93,16 @@
 
                 <!-- Feed Stats & Multi-select Header -->
                 <div class="feed-header-info">
-                    <span id="stats-count" class="stats-text">Showing 0 updates</span>
-                    <span id="filter-active-tag" class="filter-badge hidden">Filtered</span>
+                    <div class="stats-left">
+                        <span id="stats-count" class="stats-text">Showing 0 updates</span>
+                        <span id="filter-active-tag" class="filter-badge hidden">Filtered</span>
+                    </div>
+                    <button id="btn-export-csv" class="btn btn-secondary btn-small" title="Export current filtered updates to CSV">
+                        <svg class="icon btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                        </svg>
+                        <span>Export CSV</span>
+                    </button>
                 </div>
 
                 <!-- Release Notes Container -->
